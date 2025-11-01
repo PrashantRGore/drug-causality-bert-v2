@@ -542,3 +542,69 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Force Streamlit redeploy 11/02/2025 02:39:12
+
+
+# ===== UNIFIED DRUG & ADR DATABASE =====
+
+import requests
+from typing import Set, Dict, List
+
+class RxNormDrugDatabase:
+    def __init__(self):
+        self.base_url = "https://rxnav.nlm.nih.gov/REST"
+    
+    def search_drugs(self, query: str) -> List[str]:
+        try:
+            url = f"{self.base_url}/rxcui/search.json"
+            params = {'search': query, 'maxEntries': 50}
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if 'idGroup' in data and 'rxList' in data['idGroup']:
+                    return [drug['name'] for drug in data['idGroup']['rxList']]
+        except:
+            pass
+        return []
+
+class FAERSIntegration:
+    def __init__(self):
+        self.openFDA_api = "https://api.fda.gov/drug/event.json"
+    
+    def get_adverse_events(self, drug_name: str, limit: int = 50) -> List[Dict]:
+        try:
+            params = {
+                'search': f'patient.drug.openfda.generic_name:"{drug_name}"',
+                'limit': limit
+            }
+            response = requests.get(self.openFDA_api, params=params, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                events = []
+                if 'results' in data:
+                    for report in data['results']:
+                        if 'patient' in report and 'reaction' in report['patient']:
+                            for reaction in report['patient']['reaction']:
+                                events.append({
+                                    'event': reaction.get('reactionmeddrapt', 'Unknown'),
+                                    'outcome': reaction.get('reactionoutcome', 'Unknown')
+                                })
+                return events
+        except:
+            pass
+        return []
+
+class UnifiedDrugADRDatabase:
+    def __init__(self):
+        self.rxnorm = RxNormDrugDatabase()
+        self.faers = FAERSIntegration()
+    
+    def extract_drugs_from_text(self, text: str) -> Set[str]:
+        text_lower = text.lower()
+        common_drugs = ['bortezomib', 'metoprolol', 'rituximab', 'simvastatin']
+        return {drug for drug in common_drugs if drug in text_lower}
+    
+    def get_adrs_for_drug(self, drug_name: str) -> Dict:
+        try:
+            return {'adrs': self.faers.get_adverse_events(drug_name, limit=10)}
+        except:
+            return {'adrs': []}
