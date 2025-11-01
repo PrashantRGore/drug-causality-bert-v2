@@ -540,3 +540,5 @@ st.markdown("""
     <p>© 2025 | Powered by BioBERT | Model F1: 0.9759</p>
 </div>
 """, unsafe_allow_html=True)
+
+# Force Streamlit redeploy 11/02/2025 02:39:12
