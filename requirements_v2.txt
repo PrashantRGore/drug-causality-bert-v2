@@ -1,28 +1,41 @@
-# Drug Causality BERT v2.0 - Requirements
-# Python 3.8+
-
-# Core ML/NLP
+﻿# Core ML Libraries
 torch>=2.1.0
 transformers>=4.35.0
-safetensors>=0.4.0
+datasets>=2.14.6
 
 # Data Processing
-pandas>=1.5.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
+pandas>=2.1.3
+numpy>=1.24.3
+scikit-learn>=1.3.2
+imbalanced-learn>=0.11.0
 
-# NLP Tools
-nltk>=3.7
+# NLP
+nltk>=3.8.1
+sentencepiece>=0.1.99
+
+# Explainability
+lime>=0.2.0.1
 
 # PDF Processing
 PyPDF2>=3.0.1
 
-# Document Generation
-python-docx>=0.8.11
+# Document Generation (MISSING - ADD THIS)
+python-docx>=1.1.0
+openpyxl>=3.1.2
 
-# Web Application
-streamlit>=1.28.0
-plotly>=5.17.0
+# System Monitoring
+psutil>=5.9.6
 
-# Utilities
+# Web App
+streamlit>=1.28.2
+plotly>=5.18.0
+
+# Visualization
+matplotlib>=3.8.2
+seaborn>=0.13.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# Date/Time
 python-dateutil>=2.8.2
