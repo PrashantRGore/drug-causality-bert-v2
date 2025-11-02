@@ -1,4 +1,4 @@
-# Drug Causality BERT v2.0 - FULLY AUTOMATED WITH FIXED SYNTAX
+# Drug Causality BERT v2.0 - FULLY AUTOMATED WITH AUTO-DOWNLOADS
 import streamlit as st
 import torch
 import re
@@ -8,7 +8,10 @@ from typing import Dict, Set, List
 from datetime import datetime
 import PyPDF2
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import base64
+from io import BytesIO
 
+# Store PDF analysis in session
 if 'pdf_data' not in st.session_state:
     st.session_state.pdf_data = None
 if 'extracted_data' not in st.session_state:
@@ -207,13 +210,10 @@ def classify_text(text, threshold, enhance):
 def generate_professional_summary(pdf_text, drug, adrs, case_info, classification):
     summary = 'PROFESSIONAL CASE SUMMARY REPORT\n'
     summary += '=' * 80 + '\n'
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    summary += f'Generated: {timestamp}\n'
-    report_id = datetime.now().strftime('%Y%m%d%H%M%S')
-    summary += f'Report ID: SUMMARY-{report_id}\n\n'
+    summary += f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+    summary += f'Report ID: SUMMARY-{datetime.now().strftime("%Y%m%d%H%M%S")}\n\n'
     
-    drug_upper = drug.upper()
-    summary += f'DRUG: {drug_upper}\n\n'
+    summary += 'DRUG: ' + drug.upper() + '\n\n'
     
     if case_info.get('demographics'):
         summary += 'PATIENT DEMOGRAPHICS:\n'
@@ -233,15 +233,12 @@ def generate_professional_summary(pdf_text, drug, adrs, case_info, classificatio
         for adr in adrs:
             summary += f'  • {adr}\n'
     
-    summary += '\nCLASSIFICATION RESULTS:\n'
-    pred = classification['prediction']
-    conf = classification['confidence']
-    summary += f'  BioBERT Assessment: {pred}\n'
-    summary += f'  Confidence: {conf:.2%}\n'
+    summary += f'\nCLASSIFICATION RESULTS:\n'
+    summary += f'  BioBERT Assessment: {classification["prediction"]}\n'
+    summary += f'  Confidence: {classification["confidence"]:.2%}\n'
     
     summary += '\nCASE SUMMARY:\n'
-    pdf_snippet = pdf_text[:1000] if len(pdf_text) > 1000 else pdf_text
-    summary += pdf_snippet + '...\n\n'
+    summary += pdf_text[:1000] + '...\n\n'
     
     summary += '\nCLINICAL ASSESSMENT:\n'
     summary += 'This case represents a documented adverse drug reaction.\n'
@@ -256,30 +253,23 @@ def generate_professional_summary(pdf_text, drug, adrs, case_info, classificatio
 def generate_causality_assessment(drug, adrs, classification, case_info):
     assessment = 'CAUSALITY ASSESSMENT REPORT\n'
     assessment += '=' * 80 + '\n'
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    assessment += f'Generated: {timestamp}\n'
-    report_id = datetime.now().strftime('%Y%m%d%H%M%S')
-    assessment += f'Report ID: CAUSALITY-{report_id}\n\n'
+    assessment += f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+    assessment += f'Report ID: CAUSALITY-{datetime.now().strftime("%Y%m%d%H%M%S")}\n\n'
     
-    drug_upper = drug.upper()
     assessment += 'IMPLICATED DRUG:\n'
-    assessment += f'  {drug_upper}\n\n'
+    assessment += f'  {drug.upper()}\n\n'
     
     assessment += 'ADVERSE REACTIONS:\n'
     for adr in adrs:
         assessment += f'  • {adr}\n'
     
-    pred = classification['prediction']
-    conf = classification['confidence']
-    base_score = classification['base_score']
     assessment += f'\nASSESSMENT RESULTS:\n'
-    assessment += f'  BioBERT Prediction: {pred}\n'
-    assessment += f'  Confidence Score: {conf:.2%}\n'
-    assessment += f'  Base Score: {base_score:.2%}\n'
+    assessment += f'  BioBERT Prediction: {classification["prediction"]}\n'
+    assessment += f'  Confidence Score: {classification["confidence"]:.2%}\n'
+    assessment += f'  Base Score: {classification["base_score"]:.2%}\n'
     
     if classification['markers']['has_markers']:
-        marker_count = len(classification['markers']['markers'])
-        assessment += f'  Causality Markers: {marker_count}\n'
+        assessment += f'  Causality Markers: {len(classification["markers"]["markers"])}\n'
         assessment += f'  Markers Found:\n'
         for marker in classification['markers']['markers']:
             assessment += f'    - {marker}\n'
@@ -309,27 +299,20 @@ def generate_causality_assessment(drug, adrs, classification, case_info):
 def generate_pbrer_section11(drug, adrs, classification):
     pbrer = 'PBRER SECTION 11 - COMPANY COMMENT\n'
     pbrer += '=' * 80 + '\n'
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    pbrer += f'Generated: {timestamp}\n'
-    report_id = datetime.now().strftime('%Y%m%d%H%M%S')
-    pbrer += f'Report ID: PBRER-{report_id}\n\n'
+    pbrer += f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+    pbrer += f'Report ID: PBRER-{datetime.now().strftime("%Y%m%d%H%M%S")}\n\n'
     
     pbrer += 'EXECUTIVE SUMMARY\n'
     pbrer += '-' * 80 + '\n'
-    drug_upper = drug.upper()
-    pbrer += f'Drug: {drug_upper}\n'
-    adr_list = ', '.join([a.upper() for a in adrs])
-    pbrer += f'Adverse Events: {adr_list}\n'
-    pred = classification['prediction'].upper()
-    pbrer += f'Causality Assessment: {pred}\n'
-    conf = classification['confidence']
-    pbrer += f'Confidence: {conf:.0%}\n\n'
+    pbrer += f'Drug: {drug.upper()}\n'
+    pbrer += f'Adverse Events: {', '.join([a.upper() for a in adrs])}\n'
+    pbrer += f'Causality Assessment: {classification["prediction"].upper()}\n'
+    pbrer += f'Confidence: {classification["confidence"]:.0%}\n\n'
     
     pbrer += 'PERIODIC BENEFIT-RISK EVALUATION\n'
     pbrer += '-' * 80 + '\n'
-    date_str = datetime.now().strftime('%Y-%m-%d')
-    pbrer += f'Assessment Date: {date_str}\n'
-    pbrer += f'Drug: {drug_upper}\n\n'
+    pbrer += f'Assessment Date: {datetime.now().strftime("%Y-%m-%d")}\n'
+    pbrer += f'Drug: {drug.upper()}\n\n'
     
     pbrer += 'RISK PROFILE ASSESSMENT\n'
     if classification['prediction'] == 'RELATED':
@@ -342,7 +325,7 @@ def generate_pbrer_section11(drug, adrs, classification):
         pbrer += 'Recommendation: Continue routine pharmacovigilance\n'
     
     pbrer += '\nBENEFIT-RISK EVALUATION\n'
-    pbrer += f'The benefits of {drug_upper} continue to outweigh identified risks\n'
+    pbrer += 'The benefits of ' + drug + ' continue to outweigh identified risks\n'
     pbrer += 'in approved therapeutic indications.\n\n'
     
     pbrer += 'PHARMACOVIGILANCE PLAN\n'
@@ -424,7 +407,7 @@ with tabs[0]:
                 'conditions': conditions
             }
         
-        st.success(f'Extracted: {len(drugs)} drugs, {len(adrs)} ADRs')
+        st.success(f'✅ Extracted: {len(drugs)} drugs, {len(adrs)} ADRs')
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -466,35 +449,32 @@ with tabs[0]:
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                if st.button('📝 Generate Summary', use_container_width=True, key='btn_summary'):
+                if st.button('📝 Generate Summary', use_container_width=True):
                     classification = classify_text(pdf_text[:2000], threshold, enhance)
                     case_info = {'demographics': demographics, 'conditions': conditions}
                     summary = generate_professional_summary(pdf_text, selected_drug, selected_adr, case_info, classification)
                     
                     st.text_area('Professional Summary:', summary, height=400, disabled=True)
                     
-                    filename = f'Summary_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
-                    trigger_download(summary, filename)
+                    trigger_download(summary, f'Summary_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
             
             with col2:
-                if st.button('🔬 Generate Causality', use_container_width=True, key='btn_causality'):
+                if st.button('🔬 Generate Causality', use_container_width=True):
                     classification = classify_text(pdf_text[:2000], threshold, enhance)
                     causality = generate_causality_assessment(selected_drug, selected_adr, classification, {'demographics': demographics})
                     
                     st.text_area('Causality Assessment:', causality, height=400, disabled=True)
                     
-                    filename = f'Causality_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
-                    trigger_download(causality, filename)
+                    trigger_download(causality, f'Causality_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
             
             with col3:
-                if st.button('📋 Generate PBRER', use_container_width=True, key='btn_pbrer'):
+                if st.button('📋 Generate PBRER', use_container_width=True):
                     classification = classify_text(pdf_text[:2000], threshold, enhance)
                     pbrer = generate_pbrer_section11(selected_drug, selected_adr, classification)
                     
                     st.text_area('PBRER Section 11:', pbrer, height=400, disabled=True)
                     
-                    filename = f'PBRER_Section11_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
-                    trigger_download(pbrer, filename)
+                    trigger_download(pbrer, f'PBRER_Section11_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
 
 # TAB 2: TEXT CLASSIFICATION
 with tabs[1]:
