@@ -305,7 +305,8 @@ def generate_pbrer_section11(drug, adrs, classification):
     pbrer += 'EXECUTIVE SUMMARY\n'
     pbrer += '-' * 80 + '\n'
     pbrer += f'Drug: {drug.upper()}\n'
-    pbrer += f'Adverse Events: {', '.join([a.upper() for a in adrs])}\n'
+    # FIXED: Changed quote type to avoid f-string syntax error
+    pbrer += f"Adverse Events: {', '.join([a.upper() for a in adrs])}\n"
     pbrer += f'Causality Assessment: {classification["prediction"].upper()}\n'
     pbrer += f'Confidence: {classification["confidence"]:.0%}\n\n'
     
