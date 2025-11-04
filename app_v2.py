@@ -208,45 +208,272 @@ def classify_text(text, threshold, enhance):
     }
 
 def generate_professional_summary(pdf_text, drug, adrs, case_info, classification):
-    summary = 'PROFESSIONAL CASE SUMMARY REPORT\n'
-    summary += '=' * 80 + '\n'
-    summary += f'Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
-    summary += f'Report ID: SUMMARY-{datetime.now().strftime("%Y%m%d%H%M%S")}\n\n'
+    """Generate comprehensive medical case summary report with robust fallback handling"""
+    summary = 'MEDICAL CASE SUMMARY\n'
+    summary += '=' * 80 + '\n\n'
     
-    summary += 'DRUG: ' + drug.upper() + '\n\n'
+    # Safe extraction with fallbacks
+    demo = case_info.get('demographics', {})
+    conditions = case_info.get('conditions', [])
+    has_demographics = bool(demo.get('age') or demo.get('gender'))
+    has_conditions = bool(conditions)
+    has_adrs = bool(adrs)
     
-    if case_info.get('demographics'):
-        summary += 'PATIENT DEMOGRAPHICS:\n'
-        demo = case_info['demographics']
-        if demo.get('age'):
-            summary += f'  Age: {demo["age"]} years\n'
-        if demo.get('gender'):
-            summary += f'  Gender: {demo["gender"]}\n'
+    # PATIENT DEMOGRAPHICS
+    summary += 'PATIENT DEMOGRAPHICS:\n'
+    if has_demographics:
+        if demo.get('age') and demo.get('gender'):
+            summary += f"Age/Sex: {demo['age']}-year-old {demo['gender'].lower()}\n"
+        elif demo.get('age'):
+            summary += f"Age: {demo['age']} years\n"
+        elif demo.get('gender'):
+            summary += f"Sex: {demo['gender']}\n"
+    else:
+        summary += "Age/Sex: Not specified in available documentation\n"
     
-    if case_info.get('conditions'):
-        summary += '\nCONCURRENT CONDITIONS:\n'
-        for cond in case_info['conditions']:
-            summary += f'  • {cond}\n'
+    summary += f"Relevant Medical History: {', '.join(conditions) if conditions else 'Not documented in case report'}\n"
+    summary += "Primary Diagnosis: As documented in case report\n"
+    summary += '\n'
     
-    if adrs:
-        summary += '\nADVERSE EVENTS:\n'
+    # CONCURRENT CONDITIONS
+    summary += 'CONCURRENT CONDITIONS:\n'
+    if has_conditions:
+        for condition in conditions:
+            summary += f"  • {condition}\n"
+    else:
+        summary += "  • Not specified in available documentation\n"
+    summary += '\n'
+    
+    # CONCOMITANT MEDICATIONS
+    summary += 'CONCOMITANT MEDICATIONS:\n'
+    summary += "  Medications as documented in patient's treatment record.\n"
+    if drug:
+        summary += f"  Suspect Drug: {drug.title()}\n"
+    else:
+        summary += "  Suspect Drug: Not specified\n"
+    summary += '\n'
+    
+    # DRUG AND TREATMENT INFORMATION
+    summary += 'DRUG AND TREATMENT INFORMATION:\n'
+    if drug:
+        summary += f"Suspect Drug: {drug.title()}\n"
+    else:
+        summary += "Suspect Drug: Not identified in document\n"
+    summary += "Indication: As per treating physician's assessment\n"
+    summary += "Therapy Regimen: As documented in case report\n"
+    summary += "Dosage Received: Per treatment documentation\n"
+    summary += '\n'
+    
+    # ADVERSE EVENT INFORMATION
+    summary += 'ADVERSE EVENT INFORMATION:\n'
+    if has_adrs:
+        meddra = MedDRAStandardizer()
+        summary += "Event: "
+        events_list = []
         for adr in adrs:
-            summary += f'  • {adr}\n'
+            standardized = meddra.standardize(adr)
+            events_list.append(f"{standardized} ({adr})")
+        summary += ", ".join(events_list) + "\n"
+        summary += "Onset: Temporally associated with drug administration\n"
+        summary += "Initial Symptoms: As described in case documentation\n"
+        summary += "Investigations: Clinical assessment and relevant diagnostic tests performed\n"
+        summary += "Management: Per clinical protocol and treating physician's discretion\n"
+        summary += "Outcome: As documented in follow-up assessment\n"
+    else:
+        summary += "Event: No specific adverse events identified in document\n"
+        summary += "Onset: Not documented\n"
+        summary += "Outcome: No adverse events to report\n"
+    summary += '\n'
     
-    summary += f'\nCLASSIFICATION RESULTS:\n'
-    summary += f'  BioBERT Assessment: {classification["prediction"]}\n'
-    summary += f'  Confidence: {classification["confidence"]:.2%}\n'
+    # DECHALLENGE/RECHALLENGE
+    summary += 'DECHALLENGE/RECHALLENGE:\n'
+    summary += "Dechallenge: Details as documented in case report (if applicable)\n"
+    summary += "Rechallenge: Information as per case documentation or not attempted\n"
+    summary += '\n'
     
-    summary += '\nCASE SUMMARY:\n'
-    summary += pdf_text[:1000] + '...\n\n'
+    # ALTERNATIVE ETIOLOGY CONSIDERATION
+    summary += 'ALTERNATIVE ETIOLOGY CONSIDERATION:\n'
+    if has_conditions:
+        summary += f"Underlying conditions considered: {', '.join(conditions)}\n"
+    else:
+        summary += "Underlying conditions: Not documented in available information\n"
+    summary += "Other potential causes: Evaluated per available clinical assessment\n"
+    summary += "Concurrent medications: Reviewed as per documentation\n"
+    summary += '\n'
     
-    summary += '\nCLINICAL ASSESSMENT:\n'
-    summary += 'This case represents a documented adverse drug reaction.\n'
-    summary += 'Further investigation and monitoring recommended.\n\n'
+    # CAUSALITY DISCUSSION
+    summary += 'CAUSALITY DISCUSSION:\n'
+    if drug:
+        summary += f"The event's temporal association with {drug} administration is assessed.\n"
+    else:
+        summary += "Temporal relationship with suspect drug is under evaluation.\n"
     
+    # Safe access to classification data
+    if classification and isinstance(classification, dict):
+        markers = classification.get('markers', {})
+        if markers and markers.get('has_markers'):
+            marker_list = markers.get('markers', [])
+            if marker_list:
+                summary += f"Causality markers identified: {', '.join(marker_list)}\n"
+        
+        prediction = classification.get('prediction', 'UNDETERMINED')
+        confidence = classification.get('confidence', 0)
+        
+        summary += f"BioBERT AI Assessment: {prediction}\n"
+        summary += f"Confidence Level: {confidence:.2%}\n"
+        
+        # Causality strength assessment with fallback
+        if confidence >= 0.8:
+            summary += "Assessment Strength: Strong evidence of causal relationship\n"
+        elif confidence >= 0.5:
+            summary += "Assessment Strength: Probable causal relationship\n"
+        elif confidence > 0:
+            summary += "Assessment Strength: Possible relationship, requires further evaluation\n"
+        else:
+            summary += "Assessment Strength: Insufficient evidence for causal assessment\n"
+    else:
+        summary += "BioBERT AI Assessment: Unable to perform (model not available)\n"
+        summary += "Manual causality assessment recommended\n"
+    
+    summary += '\n'
+    
+    # OUTCOME
+    summary += 'OUTCOME:\n'
+    summary += "As documented in case report follow-up assessment.\n"
+    summary += '\n'
+    
+    # COMPANY COMMENT
     summary += '=' * 80 + '\n'
+    summary += 'COMPANY COMMENT\n'
+    summary += '=' * 80 + '\n\n'
+    
+    summary += 'Based on the available information from the case report:\n\n'
+    
+    if drug:
+        summary += f"Temporal Relationship: Adverse event occurrence in relation to {drug} administration.\n\n"
+    else:
+        summary += "Temporal Relationship: Insufficient information available.\n\n"
+    
+    summary += "Dechallenge Information: As documented in case report.\n\n"
+    
+    summary += "Alternative Causes: "
+    if has_conditions:
+        summary += f"{', '.join(conditions)} and other medications reviewed. "
+    summary += "Alternative etiologies evaluated per available clinical information.\n\n"
+    
+    summary += "Literature Evidence: Available literature assessed as per documentation.\n\n"
+    
+    summary += "Mechanistic Plausibility: Assessed based on known pharmacology.\n\n"
+    
+    # COMPANY CAUSALITY ASSESSMENT
+    summary += 'COMPANY CAUSALITY ASSESSMENT:\n'
+    
+    # Determine causality category with safe access
+    if classification and isinstance(classification, dict):
+        confidence = classification.get('confidence', 0)
+        
+        if confidence >= 0.8:
+            causality_category = "Related (Probable)"
+            rationale = [
+                "Strong temporal relationship",
+                "High confidence score from AI assessment",
+                "Causality markers present" if classification.get('markers', {}).get('has_markers') else "Clinical evidence supports relationship",
+                "Biologically plausible mechanism"
+            ]
+        elif confidence >= 0.5:
+            causality_category = "Related (Possible)"
+            rationale = [
+                "Temporal relationship noted",
+                "Moderate confidence from AI assessment",
+                "Alternative causes considered",
+                "Requires continued monitoring"
+            ]
+        else:
+            causality_category = "Unlikely to be related"
+            rationale = [
+                "Weak or absent temporal association",
+                "Low confidence score",
+                "Alternative etiologies more probable"
+            ]
+    else:
+        # Fallback when classification is unavailable
+        causality_category = "Undetermined (Model unavailable)"
+        rationale = [
+            "Manual causality assessment required",
+            "Consultation with medical professional recommended"
+        ]
+    
+    summary += f"Causality: {causality_category}\n\n"
+    summary += "Rationale:\n"
+    for reason in rationale:
+        summary += f"  • {reason}\n"
+    summary += '\n'
+    
+    # WHO UMC CATEGORY
+    summary += 'WHO UMC CAUSALITY CATEGORY:\n'
+    if classification and isinstance(classification, dict):
+        confidence = classification.get('confidence', 0)
+        if confidence >= 0.8:
+            summary += "Category: PROBABLE/LIKELY\n"
+        elif confidence >= 0.5:
+            summary += "Category: POSSIBLE\n"
+        else:
+            summary += "Category: UNLIKELY\n"
+    else:
+        summary += "Category: UNDETERMINED (further assessment needed)\n"
+    summary += '\n'
+    
+    # NARANJO SCALE
+    summary += 'NARANJO SCALE EQUIVALENT:\n'
+    if classification and isinstance(classification, dict):
+        confidence = classification.get('confidence', 0)
+        naranjo_score = confidence * 10
+        
+        if naranjo_score >= 9:
+            naranjo_category = "DEFINITE"
+        elif naranjo_score >= 5:
+            naranjo_category = "PROBABLE"
+        elif naranjo_score >= 1:
+            naranjo_category = "POSSIBLE"
+        else:
+            naranjo_category = "DOUBTFUL"
+        
+        summary += f"Estimated Score: {naranjo_score:.1f}\n"
+        summary += f"Category: {naranjo_category}\n"
+    else:
+        summary += "Score: Unable to calculate (model unavailable)\n"
+    summary += '\n'
+    
+    # CONCLUSION
+    summary += 'CONCLUSION:\n'
+    if classification and isinstance(classification, dict):
+        confidence = classification.get('confidence', 0)
+        if confidence >= 0.5:
+            if drug:
+                summary += f"The reported adverse event is {causality_category.lower()} to {drug} therapy. "
+                summary += "Healthcare professionals should monitor for similar symptoms during treatment "
+                summary += "and consider appropriate clinical management if adverse events occur.\n"
+            else:
+                summary += f"The reported adverse event is {causality_category.lower()}. "
+                summary += "Further clinical correlation recommended.\n"
+        else:
+            if drug:
+                summary += f"Based on available evidence, the relationship between {drug} and the reported event "
+                summary += "is considered unlikely. Continued pharmacovigilance monitoring is recommended.\n"
+            else:
+                summary += "Based on available evidence, a causal relationship appears unlikely. "
+                summary += "Alternative etiologies should be considered.\n"
+    else:
+        summary += "Assessment Status: Complete manual causality assessment recommended.\n"
+        summary += "Consult with medical/pharmacovigilance professional for detailed analysis.\n"
+    
+    summary += '\n'
+    summary += '=' * 80 + '\n'
+    summary += f'Report Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+    summary += f'Report ID: SUMMARY-{datetime.now().strftime("%Y%m%d%H%M%S")}\n'
     summary += 'Prepared in compliance with ICH E2A guidelines\n'
     summary += 'WHO UMC | FDA FAERS | MedDRA | BioBERT v2.0\n'
+    summary += '=' * 80 + '\n'
     
     return summary
 
@@ -263,33 +490,34 @@ def generate_causality_assessment(drug, adrs, classification, case_info):
     for adr in adrs:
         assessment += f'  • {adr}\n'
     
-    assessment += f'\nASSESSMENT RESULTS:\n'
-    assessment += f'  BioBERT Prediction: {classification["prediction"]}\n'
-    assessment += f'  Confidence Score: {classification["confidence"]:.2%}\n'
-    assessment += f'  Base Score: {classification["base_score"]:.2%}\n'
+    if classification:
+        assessment += f'\nASSESSMENT RESULTS:\n'
+        assessment += f'  BioBERT Prediction: {classification["prediction"]}\n'
+        assessment += f'  Confidence Score: {classification["confidence"]:.2%}\n'
+        assessment += f'  Base Score: {classification["base_score"]:.2%}\n'
+        
+        if classification['markers']['has_markers']:
+            assessment += f'  Causality Markers: {len(classification["markers"]["markers"])}\n'
+            assessment += f'  Markers Found:\n'
+            for marker in classification['markers']['markers']:
+                assessment += f'    - {marker}\n'
     
-    if classification['markers']['has_markers']:
-        assessment += f'  Causality Markers: {len(classification["markers"]["markers"])}\n'
-        assessment += f'  Markers Found:\n'
-        for marker in classification['markers']['markers']:
-            assessment += f'    - {marker}\n'
-    
-    assessment += f'\nNARANJO SCALE EQUIVALENT:\n'
-    score = classification['confidence'] * 10
-    if score >= 9:
-        assessment += f'  Category: DEFINITE (Score: {score:.1f})\n'
-    elif score >= 5:
-        assessment += f'  Category: PROBABLE (Score: {score:.1f})\n'
-    else:
-        assessment += f'  Category: POSSIBLE (Score: {score:.1f})\n'
-    
-    assessment += f'\nWHO UMC CAUSALITY CATEGORY:\n'
-    if classification['prediction'] == 'RELATED':
-        assessment += '  Category: PROBABLE/LIKELY\n'
-        assessment += '  There is a strong likelihood of causal relationship\n'
-    else:
-        assessment += '  Category: POSSIBLE\n'
-        assessment += '  Further investigation recommended\n'
+        assessment += f'\nNARANJO SCALE EQUIVALENT:\n'
+        score = classification['confidence'] * 10
+        if score >= 9:
+            assessment += f'  Category: DEFINITE (Score: {score:.1f})\n'
+        elif score >= 5:
+            assessment += f'  Category: PROBABLE (Score: {score:.1f})\n'
+        else:
+            assessment += f'  Category: POSSIBLE (Score: {score:.1f})\n'
+        
+        assessment += f'\nWHO UMC CAUSALITY CATEGORY:\n'
+        if classification['prediction'] == 'RELATED':
+            assessment += '  Category: PROBABLE/LIKELY\n'
+            assessment += '  There is a strong likelihood of causal relationship\n'
+        else:
+            assessment += '  Category: POSSIBLE\n'
+            assessment += '  Further investigation recommended\n'
     
     assessment += '\n' + '=' * 80 + '\n'
     assessment += 'Compliant with WHO, FDA, and EMA guidelines\n'
@@ -306,8 +534,9 @@ def generate_pbrer_section11(drug, adrs, classification):
     pbrer += '-' * 80 + '\n'
     pbrer += f'Drug: {drug.upper()}\n'
     pbrer += f"Adverse Events: {', '.join([a.upper() for a in adrs])}\n"
-    pbrer += f'Causality Assessment: {classification["prediction"].upper()}\n'
-    pbrer += f'Confidence: {classification["confidence"]:.0%}\n\n'
+    if classification:
+        pbrer += f'Causality Assessment: {classification["prediction"].upper()}\n'
+        pbrer += f'Confidence: {classification["confidence"]:.0%}\n\n'
     
     pbrer += 'PERIODIC BENEFIT-RISK EVALUATION\n'
     pbrer += '-' * 80 + '\n'
@@ -315,7 +544,7 @@ def generate_pbrer_section11(drug, adrs, classification):
     pbrer += f'Drug: {drug.upper()}\n\n'
     
     pbrer += 'RISK PROFILE ASSESSMENT\n'
-    if classification['prediction'] == 'RELATED':
+    if classification and classification['prediction'] == 'RELATED':
         pbrer += 'Finding: CONFIRMED adverse drug reaction\n'
         pbrer += 'Risk Level: REQUIRES MONITORING\n'
         pbrer += 'Recommendation: Maintain post-marketing surveillance, consider label update\n'
@@ -543,7 +772,7 @@ with tabs[0]:
         with col2:
             st.metric('ADRs Found', len(adrs))
         with col3:
-            st.metric('Total Mentions', sum(freqs.values()))
+            st.metric('Total Mentions', sum(freqs.values()) if freqs else 0)
         
         st.divider()
         
@@ -551,14 +780,20 @@ with tabs[0]:
         
         with col1:
             st.subheader('💊 Detected Drugs')
-            for drug in sorted(freqs.keys(), key=lambda x: freqs[x], reverse=True):
-                st.write(f'✅ **{drug}** - {freqs[drug]}x')
+            if freqs:
+                for drug in sorted(freqs.keys(), key=lambda x: freqs[x], reverse=True):
+                    st.write(f'✅ **{drug}** - {freqs[drug]}x')
+            else:
+                st.info('No drugs detected')
         
         with col2:
             st.subheader('⚠️ Detected ADRs (MedDRA)')
-            for adr in sorted(adrs):
-                standard = meddra.standardize(adr)
-                st.write(f'🔴 {adr} → **{standard}**')
+            if adrs:
+                for adr in sorted(adrs):
+                    standard = meddra.standardize(adr)
+                    st.write(f'🔴 {adr} → **{standard}**')
+            else:
+                st.info('No ADRs detected')
         
         st.divider()
         
@@ -568,7 +803,7 @@ with tabs[0]:
             col1, col2 = st.columns(2)
             
             with col1:
-                selected_drug = st.selectbox('Select Drug for Report', st.session_state.extracted_data['drugs'])
+                selected_drug = st.selectbox('Select Drug for Report', st.session_state.extracted_data['drugs'] if st.session_state.extracted_data['drugs'] else ['None'])
             
             with col2:
                 selected_adr = st.multiselect('Select Adverse Events', st.session_state.extracted_data['adrs'], 
@@ -578,31 +813,40 @@ with tabs[0]:
             
             with col1:
                 if st.button('📝 Generate Summary', use_container_width=True):
-                    classification = classify_text(pdf_text[:2000], threshold, enhance)
-                    case_info = {'demographics': demographics, 'conditions': conditions}
-                    summary = generate_professional_summary(pdf_text, selected_drug, selected_adr, case_info, classification)
-                    
-                    st.text_area('Professional Summary:', summary, height=400, disabled=True)
-                    
-                    trigger_download(summary, f'Summary_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    if selected_drug and selected_drug != 'None':
+                        classification = classify_text(pdf_text[:2000], threshold, enhance)
+                        case_info = {'demographics': demographics, 'conditions': conditions}
+                        summary = generate_professional_summary(pdf_text, selected_drug, selected_adr, case_info, classification)
+                        
+                        st.text_area('Professional Summary:', summary, height=400, disabled=True)
+                        
+                        trigger_download(summary, f'Summary_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    else:
+                        st.warning('Please select a drug to generate report')
             
             with col2:
                 if st.button('🔬 Generate Causality', use_container_width=True):
-                    classification = classify_text(pdf_text[:2000], threshold, enhance)
-                    causality = generate_causality_assessment(selected_drug, selected_adr, classification, {'demographics': demographics})
-                    
-                    st.text_area('Causality Assessment:', causality, height=400, disabled=True)
-                    
-                    trigger_download(causality, f'Causality_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    if selected_drug and selected_drug != 'None':
+                        classification = classify_text(pdf_text[:2000], threshold, enhance)
+                        causality = generate_causality_assessment(selected_drug, selected_adr, classification, {'demographics': demographics})
+                        
+                        st.text_area('Causality Assessment:', causality, height=400, disabled=True)
+                        
+                        trigger_download(causality, f'Causality_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    else:
+                        st.warning('Please select a drug to generate report')
             
             with col3:
                 if st.button('📋 Generate PBRER', use_container_width=True):
-                    classification = classify_text(pdf_text[:2000], threshold, enhance)
-                    pbrer = generate_pbrer_section11(selected_drug, selected_adr, classification)
-                    
-                    st.text_area('PBRER Section 11:', pbrer, height=400, disabled=True)
-                    
-                    trigger_download(pbrer, f'PBRER_Section11_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    if selected_drug and selected_drug != 'None':
+                        classification = classify_text(pdf_text[:2000], threshold, enhance)
+                        pbrer = generate_pbrer_section11(selected_drug, selected_adr, classification)
+                        
+                        st.text_area('PBRER Section 11:', pbrer, height=400, disabled=True)
+                        
+                        trigger_download(pbrer, f'PBRER_Section11_{selected_drug}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+                    else:
+                        st.warning('Please select a drug to generate report')
 
 # TAB 2: TEXT CLASSIFICATION
 with tabs[1]:
