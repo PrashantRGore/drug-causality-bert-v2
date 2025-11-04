@@ -305,7 +305,6 @@ def generate_pbrer_section11(drug, adrs, classification):
     pbrer += 'EXECUTIVE SUMMARY\n'
     pbrer += '-' * 80 + '\n'
     pbrer += f'Drug: {drug.upper()}\n'
-    # FIXED: Changed quote type to avoid f-string syntax error
     pbrer += f"Adverse Events: {', '.join([a.upper() for a in adrs])}\n"
     pbrer += f'Causality Assessment: {classification["prediction"].upper()}\n'
     pbrer += f'Confidence: {classification["confidence"]:.0%}\n\n'
@@ -368,18 +367,146 @@ st.set_page_config(page_title='Drug Causality BERT v2.0', page_icon='💊', layo
 
 st.title('💊 Drug Causality BERT v2.0')
 st.markdown('**Auto-Analysis | Professional Reports | WHO UMC | FDA FAERS | MedDRA**')
+
+# FEATURES AND HOW TO USE SECTIONS
+with st.expander("📖 **Features & Capabilities**", expanded=False):
+    st.markdown("### 🎯 Key Features")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **🤖 AI-Powered Analysis**
+        - BioBERT-based causality classification
+        - 97.59% accuracy on validation set
+        - Real-time drug-ADR relationship detection
+        
+        **📄 Automated PDF Processing**
+        - Extract drugs and adverse events from literature
+        - Identify patient demographics and conditions
+        - Generate comprehensive case summaries
+        
+        **🏥 Regulatory Compliance**
+        - WHO UMC causality assessment
+        - Naranjo Scale equivalents
+        - ICH E2A guideline compliance
+        """)
+    
+    with col2:
+        st.markdown("""
+        **📊 Professional Report Generation**
+        - Professional Case Summary Reports
+        - Causality Assessment Reports
+        - PBRER Section 11 (ICH E2C compliant)
+        
+        **🔍 Advanced Extraction**
+        - Multi-drug detection with frequency analysis
+        - MedDRA standardization for ADRs
+        - Contextual causality marker detection
+        
+        **📈 Performance Metrics**
+        - F1 Score: 97.59%
+        - Sensitivity: 98.68%
+        - Specificity: 96.50%
+        """)
+
+with st.expander("📚 **How to Use This Application**", expanded=False):
+    st.markdown("### 🚀 Quick Start Guide")
+    
+    st.markdown("""
+    #### **1️⃣ PDF Analysis & Report Generation** (Recommended for most users)
+    
+    **Steps:**
+    1. Navigate to the **"📄 PDF Analysis & Reports"** tab
+    2. Click **"Browse files"** and upload your case report PDF or medical literature
+    3. The system will automatically extract:
+       - Drug names and their frequencies
+       - Adverse drug reactions (ADRs)
+       - Patient demographics (age, gender)
+       - Concurrent medical conditions
+    4. Review the extracted information displayed on the screen
+    5. Select the drug and adverse events you want to analyze
+    6. Click one of the report generation buttons:
+       - **📝 Generate Summary**: Professional case summary report
+       - **🔬 Generate Causality**: Detailed causality assessment with WHO UMC and Naranjo scales
+       - **📋 Generate PBRER**: PBRER Section 11 for regulatory submission
+    7. Download the generated report using the download button
+    
+    ---
+    
+    #### **2️⃣ Text Classification** (For quick causality checks)
+    
+    **Steps:**
+    1. Go to the **"📝 Classification"** tab
+    2. Enter or paste medical text describing a drug-ADR relationship
+    3. Click **"🔬 Classify"**
+    4. Review the classification result (RELATED/NOT RELATED) and confidence score
+    
+    **Example text:**
+    > "The patient developed hearing loss secondary to cisplatin treatment for lung cancer."
+    
+    ---
+    
+    #### **3️⃣ Drug & ADR Extraction** (For entity recognition)
+    
+    **Steps:**
+    1. Navigate to **"🔍 Extraction"** tab
+    2. Enter text containing drug names and adverse events
+    3. Click **"Extract"**
+    4. View the extracted drugs and ADRs in two columns
+    
+    ---
+    
+    #### **⚙️ Configuration Options** (Sidebar)
+    
+    - **BioBERT Threshold**: Adjust the classification sensitivity (0.3-0.9)
+      - Lower values: More sensitive (may include weaker relationships)
+      - Higher values: More specific (only strong relationships)
+      - Default: 0.5
+    
+    - **Enhance Scores**: Enable to boost confidence when causality markers are detected
+      - Markers include: "caused by", "secondary to", "induced by", etc.
+    
+    ---
+    
+    #### **💡 Tips for Best Results**
+    
+    - Upload **clear, text-based PDFs** (not scanned images) for optimal extraction
+    - Include **patient demographics** and **concurrent conditions** in case reports
+    - Use **medical terminology** for accurate drug and ADR detection
+    - For literature reviews, focus on sections describing **adverse events**
+    - Download reports immediately after generation (they are not saved in the system)
+    
+    ---
+    
+    #### **📋 Supported Drug Names**
+    
+    The system recognizes common oncology and cardiovascular drugs including:
+    - Bortezomib (Velcade), Cisplatin (Platinol), Doxorubicin (Adriamycin)
+    - Paclitaxel (Taxol), Methotrexate, Rituximab (Rituxan)
+    - Metoprolol (Lopressor), Simvastatin (Zocor)
+    
+    *For drugs not in the database, manual text classification is recommended.*
+    """)
+
 st.divider()
 
 with st.sidebar:
     st.title('⚙️ Configuration')
-    threshold = st.slider('BioBERT Threshold', 0.3, 0.9, 0.5, 0.05)
-    enhance = st.checkbox('Enhance Scores', True)
+    threshold = st.slider('BioBERT Threshold', 0.3, 0.9, 0.5, 0.05, 
+                         help="Adjust classification sensitivity. Lower = more sensitive, Higher = more specific")
+    enhance = st.checkbox('Enhance Scores', True, 
+                         help="Boost confidence when causality markers (e.g., 'caused by') are detected")
+    
+    st.divider()
+    st.info("💡 **Tip**: Adjust the threshold based on your use case. Lower thresholds for screening, higher for confirmation.")
 
 tabs = st.tabs(['📄 PDF Analysis & Reports', '📝 Classification', '🔍 Extraction', '🧮 Algorithms', '📊 Analytics'])
 
 # TAB 1: PDF ANALYSIS & AUTO REPORTS
 with tabs[0]:
     st.header('📄 PDF Analysis & Automatic Report Generation')
+    st.markdown("Upload a case report or medical literature PDF to automatically extract drugs, ADRs, and generate professional reports.")
     
     uploaded = st.file_uploader('Upload Literature/Case Report PDF', type=['pdf'], key='pdf_upload')
     
@@ -480,7 +607,10 @@ with tabs[0]:
 # TAB 2: TEXT CLASSIFICATION
 with tabs[1]:
     st.header('📝 Text Classification')
-    user_text = st.text_area('Enter medical text:', height=150)
+    st.markdown("Enter medical text to classify the drug-ADR causality relationship.")
+    
+    user_text = st.text_area('Enter medical text:', height=150, 
+                             placeholder='Example: The patient developed neuropathy secondary to bortezomib treatment...')
     
     if st.button('🔬 Classify'):
         if user_text.strip():
@@ -497,7 +627,10 @@ with tabs[1]:
 # TAB 3: EXTRACTION
 with tabs[2]:
     st.header('🔍 Drug & ADR Extraction')
-    text = st.text_area('Enter text for extraction:', height=200)
+    st.markdown("Extract drug names and adverse drug reactions from unstructured medical text.")
+    
+    text = st.text_area('Enter text for extraction:', height=200,
+                       placeholder='Paste medical text, case reports, or literature excerpts here...')
     
     if st.button('Extract'):
         if text.strip():
@@ -509,30 +642,110 @@ with tabs[2]:
             c1, c2 = st.columns(2)
             with c1:
                 st.write('**Drugs:**')
-                for d in sorted(drugs):
-                    st.write(f'✅ {d}')
+                if drugs:
+                    for d in sorted(drugs):
+                        st.write(f'✅ {d}')
+                else:
+                    st.info('No drugs detected')
             with c2:
                 st.write('**ADRs:**')
-                for a in sorted(adrs):
-                    st.write(f'🔴 {a}')
+                if adrs:
+                    for a in sorted(adrs):
+                        st.write(f'🔴 {a}')
+                else:
+                    st.info('No ADRs detected')
 
 # TAB 4: ALGORITHMS
 with tabs[3]:
     st.header('🧮 Causality Algorithms Comparison')
-    st.write('WHO UMC | Naranjo | Karch | BioBERT')
+    st.markdown("Understanding different causality assessment methodologies.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader('WHO UMC Scale')
+        st.markdown("""
+        **Categories:**
+        - **Certain**: Clear causal relationship
+        - **Probable/Likely**: Strong evidence
+        - **Possible**: Plausible relationship
+        - **Unlikely**: Improbable connection
+        - **Conditional**: Needs more data
+        - **Unassessable**: Cannot be evaluated
+        """)
+        
+        st.subheader('Naranjo Scale')
+        st.markdown("""
+        **Score-based system:**
+        - ≥9: **Definite** causality
+        - 5-8: **Probable** causality
+        - 1-4: **Possible** causality
+        - ≤0: **Doubtful** causality
+        """)
+    
+    with col2:
+        st.subheader('BioBERT AI Model')
+        st.markdown("""
+        **Machine Learning Approach:**
+        - Binary classification (RELATED/NOT RELATED)
+        - Confidence scores (0-100%)
+        - Contextual marker detection
+        - Real-time processing
+        
+        **Advantages:**
+        - Consistent and objective
+        - Learns from large datasets
+        - Processes natural language
+        - High accuracy (97.59%)
+        """)
+        
+        st.subheader('Karch & Lasagna')
+        st.markdown("""
+        **Traditional Algorithm:**
+        - Temporal relationship analysis
+        - Known drug reaction patterns
+        - Response to discontinuation
+        - Re-challenge outcomes
+        """)
 
 # TAB 5: ANALYTICS
 with tabs[4]:
     st.header('📊 Performance Metrics')
+    st.markdown("BioBERT v2.0 model validation results on pharmacovigilance dataset.")
+    
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric('F1 Score', '0.9759')
+        st.metric('F1 Score', '97.59%')
     with c2:
         st.metric('Accuracy', '97.59%')
     with c3:
         st.metric('Sensitivity', '98.68%')
     with c4:
         st.metric('Specificity', '96.50%')
+    
+    st.divider()
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader('📈 Model Architecture')
+        st.markdown("""
+        - **Base Model**: BioBERT (Biomedical BERT)
+        - **Training Data**: Pharmacovigilance case reports
+        - **Input**: Medical text (max 96 tokens)
+        - **Output**: Binary classification + confidence
+        - **Framework**: PyTorch + Transformers
+        """)
+    
+    with col2:
+        st.subheader('🎯 Use Cases')
+        st.markdown("""
+        - Pharmacovigilance signal detection
+        - Literature review automation
+        - Regulatory report generation
+        - Clinical trial safety analysis
+        - Post-marketing surveillance
+        """)
 
 st.divider()
 st.caption('WHO UMC | FDA FAERS | MedDRA | BioBERT v2.0 | PBRER/PSUR Compliant')
