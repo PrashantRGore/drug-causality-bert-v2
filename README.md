@@ -1,4 +1,4 @@
-# My Deployed app link is [drug-causality-bert-k6eqkuzeuuq3ggsbxp7lcy](https://drug-causality-bert-k6eqkuzeuuq3ggsbxp7lcy.streamlit.app/)
+# My Deployed app link is https://drug-causality-bert-v2-tweghknxn5ve46tymrq27g.streamlit.app/
 # Drug Causality Classification
 
 BioBERT-based system for drug-adverse event causality assessment
@@ -12,10 +12,10 @@ BioBERT-based system for drug-adverse event causality assessment
 ## Quick Start
 
 Install dependencies:
-    pip install -r requirements.txt
+    pip install -r requirements_v2.txt
 
 Run the web app:
-    streamlit run app/streamlit_app.py
+    streamlit run app/app_v2.py
 
 ## Project Structure
 - data/ - Datasets
@@ -27,5 +27,5 @@ Run the web app:
 MIT License
 =======
 # drug-causality-bert
-Determine the causality between the drug and event
+Generate medical reports from Literature articles
 >>>>>>> 37e16b6ae6038cbfaca5cf2114fb4acab8af9ba8
