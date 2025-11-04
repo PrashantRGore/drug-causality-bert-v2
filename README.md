@@ -26,6 +26,6 @@ Run the web app:
 ## License
 MIT License
 =======
-# drug-causality-bert
+# drug-causality-bert-V2
 Generate medical reports from Literature articles
 >>>>>>> 37e16b6ae6038cbfaca5cf2114fb4acab8af9ba8
