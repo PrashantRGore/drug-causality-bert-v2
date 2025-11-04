@@ -78,3 +78,6 @@ htmlcov/
 
 # Distribution
 *.whl
+
+# Backup folders
+backup_v1_legacy*/
