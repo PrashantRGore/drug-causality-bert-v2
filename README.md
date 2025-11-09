@@ -4,7 +4,7 @@ Advanced BioBERT-based system for automated drug-adverse event causality assessm
 
 ## 🚀 Live Demo
 
-**Try the App**
+**[Try the App](https://drug-causality-bert-v2-tweghknxn5ve46tymrq27g.streamlit.app/)**
 
 ## 📊 Performance Metrics
 
