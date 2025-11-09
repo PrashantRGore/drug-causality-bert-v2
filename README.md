@@ -1,5 +1,5 @@
-# My Deployed app link is https://drug-causality-bert-v2-tweghknxn5ve46tymrq27g.streamlit.app/
-# Drug Causality Classification
+# My Deployed app link is https://drug-causality-bert-v2-dppzsmnjdxevrxyappieda.streamlit.app/
+# Report generation
 
 BioBERT-based system for drug-adverse event causality assessment
 
@@ -15,7 +15,7 @@ Install dependencies:
     pip install -r requirements_v2.txt
 
 Run the web app:
-    streamlit run app/app_v2.py
+    streamlit run streamlit_app.py
 
 ## Project Structure
 - data/ - Datasets
