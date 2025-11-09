@@ -7,37 +7,81 @@ MODEL_OPTIONS = {
     "Mistral 7B": "mistral:7b",
 }
 
-st.header("🤖 AI-Powered Clinical Report Generator")
+st.set_page_config(page_title="Drug Causality BERT V2.0", layout="wide")
+st.title("💊 Drug Causality BERT V2.0")
 
-model_choice = st.selectbox("Select Ollama Model", list(MODEL_OPTIONS.keys()))
-model_name = MODEL_OPTIONS[model_choice]
+st.caption("Advanced BioBERT-based system for automated drug-adverse event causality assessment with regulatory report generation capabilities.")
 
-@st.cache_resource(hash_funcs={OllamaReportGenerator: lambda _: None})
-def get_ollama_gen(model_name):
-    return OllamaReportGenerator(model_name=model_name)
+# Instructions or help tab can be expanded here as needed
 
-ollama_gen = get_ollama_gen(model_name)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Single Text",
+    "PDF Analysis",
+    "Batch Processing",
+    "Instructions / About",
+])
 
-if st.session_state.get("extracted_data"):
-    data = st.session_state["extracted_data"]
-    if st.button(f"Generate Clinical Report with {model_choice}"):
-        with st.spinner(f"Generating report with {model_choice}..."):
+with tab1:
+    st.header("Single Statement Causality Classification")
+    text_input = st.text_area("Enter a single drug-event clinical sentence", "")
+    threshold = st.slider("Classification threshold", 0.3, 0.9, 0.5, step=0.01)
+    st.caption("Recommended: 0.3–0.4 (sensitive), 0.5 (balanced), 0.7–0.8 (precise)")
+    # Ollama model dropdown just below threshold
+    model_choice = st.selectbox("Select Ollama Model for Clinical Report Generation", list(MODEL_OPTIONS.keys()), key="tab1_model")
+    model_name = MODEL_OPTIONS[model_choice]
+    if st.button("Classify"):
+        st.write("Your text would be analyzed here. (Demo placeholder)")
+
+with tab2:
+    st.header("PDF Analysis")
+    pdf_file = st.file_uploader("Upload a medical case report PDF", type=["pdf"])
+    threshold = st.slider("Classification threshold", 0.3, 0.9, 0.5, step=0.01, key="pdf_threshold")
+    st.caption("Recommended: 0.3–0.4 (sensitive), 0.5 (balanced), 0.7–0.8 (precise)")
+    # Ollama model dropdown just below threshold (PDF tab)
+    model_choice_2 = st.selectbox("Select Ollama Model for Clinical Report Generation", list(MODEL_OPTIONS.keys()), key="tab2_model")
+    model_name_2 = MODEL_OPTIONS[model_choice_2]
+    if pdf_file is not None:
+        st.write("PDF received. (Insert PDF processing logic here)")
+        st.session_state["extracted_data"] = {
+            "drug": "Demo Drug",
+            "adverse_event": "Demo Event",
+            "confidence": 0.87,
+            "who_umc_result": "Probable",
+            "naranjo_score": 7,
+            "sentences": [
+                {"text": "Patient developed GI symptoms after Demo Drug.", "prediction": "related"}
+            ],
+        }
+        if st.button("Generate Clinical Report from PDF"):
+            ollama_gen = OllamaReportGenerator(model_name=model_name_2)
             report = ollama_gen.generate_drug_causality_report(
-                drug_name=data.get("drug", "N/A"),
-                adverse_event=data.get("adverse_event", "N/A"),
-                causality_score=data.get("confidence", 0.0),
-                who_umc_result=data.get("who_umc_result", "Unknown"),
-                naranjo_score=data.get("naranjo_score", 0),
-                sentence_analysis=data.get("sentences", []),
+                drug_name="Demo Drug",
+                adverse_event="Demo Event",
+                causality_score=0.87,
+                who_umc_result="Probable",
+                naranjo_score=7,
+                sentence_analysis=[
+                    {"text": "Patient developed GI symptoms after Demo Drug.", "prediction": "related"}
+                ]
             )
             st.markdown(report)
-            st.download_button(
-                "Download Clinical Report",
-                report,
-                file_name=f"clinical_report_{data['drug']}_{model_choice.replace(' ', '_')}.md",
-                mime="text/markdown",
-            )
-else:
-    st.info("Please upload and analyze a PDF document to generate reports.")
+            st.download_button("Download Clinical Report", data=report, file_name="clinical_report.md")
+    else:
+        st.info("Please upload a medical case report PDF.")
 
-st.caption("Switch between multiple local LLMs for report style, privacy, and accuracy.")
+with tab3:
+    st.header("Batch Processing (Coming Soon)")
+    st.warning("Batch PDF analysis is under construction for the public demo.")
+
+with tab4:
+    st.header("Instructions & About")
+    st.markdown("""
+    1. **Single Text:** Quickly classify an individual statement for drug-event causality.
+    2. **PDF Analysis:** Upload medical case reports for full document processing.
+    3. **Threshold:** Adjust to balance between sensitivity and specificity.
+    4. **Model Selection:** Use the dropdown below the threshold slider on each tab to pick your local LLM for clinical report generation.
+    5. **Local LLMs:** This app runs reports **100% offline** with your local Ollama install (no API keys required).
+    6. **Contact & Support:** See GitHub repo for issue submission or documentation.
+    """)
+
+st.markdown("> **Switch between multiple local LLMs for report style, privacy, and accuracy.**")
