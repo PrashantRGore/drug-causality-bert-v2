@@ -81,3 +81,6 @@ htmlcov/
 
 # Backup folders
 backup_v1_legacy*/
+
+# Large model files - now hosted on Hugging Face Hub
+models/production_model_final/model.safetensors

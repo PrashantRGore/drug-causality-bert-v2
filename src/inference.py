@@ -1,4 +1,4 @@
-﻿"""
+"""
 Drug-Adverse Event Causality Classification v2.0
 Enhanced BioBERT Model with Medical Terminology Preprocessing
 PBRER/PSUR Compliant for Pharmacovigilance
@@ -81,9 +81,9 @@ def preprocess_medical_causality(text):
     Converts hedged language to more definitive causality language.
     
     Examples:
-        "secondary to" → "caused by"
-        "is a very rare side effect" → "is an adverse effect"
-        "may be related to" → "related to"
+        "secondary to" ? "caused by"
+        "is a very rare side effect" ? "is an adverse effect"
+        "may be related to" ? "related to"
     """
     
     text_lower = text.lower()
@@ -112,7 +112,7 @@ def preprocess_medical_causality(text):
         'side effect of': 'adverse effect of',
         'side effects of': 'adverse effects of',
         
-        # Hedging language → stronger causality
+        # Hedging language ? stronger causality
         'may be related to': 'related to',
         'may be associated with': 'related to',
         'possibly related to': 'related to',
@@ -190,8 +190,8 @@ class CausalityClassifier:
         use_preprocessing: Whether to preprocess medical text
     """
     
-    def __init__(self, model_path='./models/production_model_final', threshold=0.5, use_preprocessing=True):
-        self.model_path = Path(model_path)
+    def __init__(self, model_path='PrashantRGore/drug-causality-bert-v2-model', threshold=0.5, use_preprocessing=True):
+        self.model_path = model_path
         self.threshold = threshold
         self.use_preprocessing = use_preprocessing
         
@@ -301,7 +301,7 @@ def extract_text_from_pdf(pdf_path):
 
 def classify_causality(
     pdf_text,
-    model_path='./models/production_model_final',
+    model_path='PrashantRGore/drug-causality-bert-v2-model',
     threshold=0.5,
     use_preprocessing=True,
     verbose=False
@@ -391,14 +391,14 @@ def classify_causality(
 
 def process_pdf_file(
     pdf_path,
-    model_path='./models/production_model_final',
+    model_path='PrashantRGore/drug-causality-bert-v2-model',
     threshold=0.5,
     use_preprocessing=True,
     save_report=False,
     output_dir='./results'
 ):
     """
-    Complete pipeline: Extract PDF → Classify → Generate Report
+    Complete pipeline: Extract PDF ? Classify ? Generate Report
     
     Args:
         pdf_path: Path to PDF file
@@ -416,7 +416,7 @@ def process_pdf_file(
     
     # Step 1: Extract text
     pdf_text = extract_text_from_pdf(pdf_path)
-    print(f"✓ Extracted {len(pdf_text)} characters")
+    print(f"? Extracted {len(pdf_text)} characters")
     
     # Step 2: Classify causality
     results = classify_causality(
@@ -441,14 +441,14 @@ def process_pdf_file(
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         
-        print(f"✓ Report saved: {report_path}")
+        print(f"? Report saved: {report_path}")
     
     return results
 
 
 def process_multiple_pdfs(
     pdf_paths,
-    model_path='./models/production_model_final',
+    model_path='PrashantRGore/drug-causality-bert-v2-model',
     threshold=0.5,
     use_preprocessing=True,
     save_reports=False,
@@ -492,10 +492,10 @@ def process_multiple_pdfs(
                 output_dir=output_dir
             )
             all_results.append(results)
-            print(f"✓ Success: {results['final_classification']}")
+            print(f"? Success: {results['final_classification']}")
             
         except Exception as e:
-            print(f"✗ Error: {e}")
+            print(f"? Error: {e}")
             all_results.append({
                 'pdf_file': str(Path(pdf_path).name),
                 'pdf_path': str(pdf_path),
@@ -533,7 +533,7 @@ def process_multiple_pdfs(
                 'results': all_results
             }, f, indent=2, ensure_ascii=False)
         
-        print(f"✓ Batch summary saved: {summary_path}\n")
+        print(f"? Batch summary saved: {summary_path}\n")
     
     return all_results
 
@@ -566,3 +566,4 @@ if __name__ == "__main__":
         if result['causality_markers_detected']:
             print(f"Marker Count: {result['marker_count']}")
         print(f"Probabilities: Not Related {result['probabilities']['not_related']:.2%} | Related {result['probabilities']['related']:.2%}")
+
