@@ -58,7 +58,7 @@ ollama pull mistral:7b
 - Before running the app, make sure Ollama is installed and models pulled as shown above.  
 
 ### Running the Application
-
+streamlit run streamlit_app.py
 
 ## 🤗 Model
 
@@ -67,18 +67,37 @@ BioBERT-based causality classification model:
 - **Repository**: PrashantRGore/drug-causality-bert-v2-model  
 - **Trained on**: ADE Corpus V2 dataset (CSIRO)
 
+## 🙏 Acknowledgments
+
+- **ADE Corpus V2** by CSIRO: Benchmark dataset for drug-adverse event detection  
+  Gurulingappa, Harsha, et al. "Development of a benchmark corpus to support the automatic extraction of drug-related adverse effects from medical case reports." *Journal of Biomedical Informatics*, 45(5), 885-892, 2012.
+
+- **BioBERT Team**: Pretrained biomedical language model used for fine tuning  
+  Lee, Jinhyuk, et al. "BioBERT: a pre-trained biomedical language representation model for biomedical text mining." *Bioinformatics*, 36(4), 1234-1240, 2020.
+
+- **Streamlit**: For the interactive web framework
+
+- **Hugging Face**: For hosting pretrained models and providing transformers library
+
+- **FDA**: For publicly available FAERS adverse event datasets
+
+- **WHO-UMC**: For causality assessment scales
+
+- **Naranjo et al.**: For the adverse drug reaction probability scales
+
 ## 📄 License
 
-Apache License 2.0
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
-
-Contributions welcome! Please submit a pull request.
 
 ## 🐛 Issues
 
 Report bugs [here](https://github.com/PrashantRGore/drug-causality-bert-v2/issues).
 
-**Note**: Ollama LLM models must be pulled locally for report generation feature to work.
+---
 
+**Note:** All Ollama LLM models must be pulled locally for the report generation features to function. There are no large model files stored in this repo. The Hugging Face BioBERT model is pulled automatically via transformers.
 
+Clinical decisions should always be made by qualified healthcare professionals.
+
+---
