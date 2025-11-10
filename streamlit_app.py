@@ -3,6 +3,7 @@ from src.ollama_report_generator import OllamaReportGenerator
 import PyPDF2
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
+import os
 
 MODEL_OPTIONS = {
     "Llama 3.2 (3B)": "llama3.2:3b",
@@ -14,17 +15,26 @@ st.set_page_config(page_title="Drug Causality BERT V2.0", layout="wide")
 st.title("💊 Drug Causality BERT V2.0")
 st.caption("Advanced BioBERT-based system for automated drug-adverse event causality assessment with regulatory report generation capabilities.")
 
-# Load BioBERT model from Hugging Face
+# Load BioBERT model from Hugging Face with token support
 @st.cache_resource
 def load_biobert_model():
     model_name = "PrashantRGore/drug-causality-bert-v2-model"
+    # Get token from environment variable or Streamlit secrets
+    token = os.environ.get("HF_TOKEN") or st.secrets.get("HF_TOKEN", None)
+    
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            model_name,
+            use_auth_token=token
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            use_auth_token=token
+        )
         return model, tokenizer
     except Exception as e:
         st.error(f"Failed to load model from Hugging Face: {e}")
-        st.info("Please ensure the model is uploaded to Hugging Face at: https://huggingface.co/PrashantRGore/drug-causality-bert-v2-model")
+        st.info("Please ensure the model is uploaded to: https://huggingface.co/PrashantRGore/drug-causality-bert-v2-model")
         return None, None
 
 model, tokenizer = load_biobert_model()
