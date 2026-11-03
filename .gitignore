@@ -27,16 +27,14 @@ MANIFEST
 venv/
 ENV/
 env/
-.venv
+.venv/
 
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb_checkpoints/
 
-# PyCharm
+# IDE & Editors
 .idea/
-
-# VS Code
 .vscode/
 
 # Streamlit
@@ -52,9 +50,19 @@ results/*.docx
 results/*.json
 results/*.txt
 
-# Models (large files - use Git LFS or download separately)
+# Large model binaries & local artifacts (hosted on Hugging Face Hub: PrashantRGore/drug-causality-bert-v2-model)
 models/production_model_final/model.safetensors
 models/production_model_final/pytorch_model.bin
+model.safetensors
+production_model_final.zip
+
+# Root duplicate model config/vocab files (canonical versions are in models/production_model_final/)
+/vocab.txt
+/tokenizer.json
+/tokenizer_config.json
+/special_tokens_map.json
+/training_config.json
+/config.json
 
 # Temporary files
 *.tmp
@@ -71,7 +79,7 @@ logs/
 .env
 .env.local
 
-# Testing
+# Testing & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
@@ -81,6 +89,4 @@ htmlcov/
 
 # Backup folders
 backup_v1_legacy*/
-
-# Large model files - now hosted on Hugging Face Hub
-models/production_model_final/model.safetensors
+drug-causality-bert-v2-hf-backup/

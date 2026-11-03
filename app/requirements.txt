@@ -1,9 +1,15 @@
+# Drug Causality BERT v2.0 - Application Dependencies
+streamlit>=1.28.0
 torch>=2.1.0
 transformers>=4.35.0
-pandas
-numpy
-scikit-learn
-nltk>=3.7
-PyPDF2>=3.0.1
-streamlit>=1.22.0
 safetensors>=0.4.0
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.2.0
+nltk>=3.8.0
+pypdf>=4.0.0
+PyPDF2>=3.0.1
+python-docx>=0.8.11
+requests>=2.31.0
+ollama>=0.1.6
+pytest>=7.4.0
