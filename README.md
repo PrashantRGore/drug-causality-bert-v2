@@ -3,6 +3,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Hugging Face Model](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model%20Hub-orange)](https://huggingface.co/PrashantRGore/drug-causality-bert-v2-model)
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Dataset%20(1M)-yellow)](https://huggingface.co/datasets/PrashantRGore/synthetic-faers-1m-v3)
 [![ADE Corpus V2 Benchmark](https://img.shields.io/badge/ADE--V2%20Accuracy-97.59%25-brightgreen)](https://huggingface.co/datasets/SetFit/ade_corpus_v2_classification)
 [![F1-Score](https://img.shields.io/badge/F1--Score-0.9759-brightgreen)](https://huggingface.co/datasets/SetFit/ade_corpus_v2_classification)
 [![CI Tests](https://github.com/PrashantRGore/drug-causality-bert-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/PrashantRGore/drug-causality-bert-v2/actions)
@@ -148,7 +149,18 @@ The web application provides five dedicated tabs:
 4. **Clinical Report Generator:** Local LLM reporting powered by Ollama (`meditron:7b`, `llama3.2:3b`) with deterministic regulatory fallbacks.
 5. **Model Card & Scientific Compliance:** Complete documentation and international regulatory guidelines (ICH E2A, E2C, E2D).
 
-### 4. Running Automated Tests
+### 4. Interactive Jupyter Tutorial
+
+We provide a complete, publication-grade tutorial notebook demonstrating zero-RAM streaming, $2 \times 2$ contingency table calculation, PRR/ROR computation with 95% confidence intervals, and BioBERT narrative causality scoring:
+
+👉 **[`notebooks/synthetic_faers_quickstart.ipynb`](notebooks/synthetic_faers_quickstart.ipynb)**
+
+```bash
+# Launch the quickstart notebook in Jupyter Lab or VS Code
+jupyter lab notebooks/synthetic_faers_quickstart.ipynb
+```
+
+### 5. Running Automated Tests
 
 ```bash
 # Run comprehensive unit test suite (10/10 tests)
@@ -171,6 +183,8 @@ drug-causality-bert-v2/
 │   └── streamlit_app.py           # Container / Codespace entrypoint wrapper
 ├── models/
 │   └── production_model_final/    # Model configs, tokenizer & LFS pointer
+├── notebooks/
+│   └── synthetic_faers_quickstart.ipynb # End-to-end signal detection & causality notebook
 ├── src/
 │   ├── __init__.py                # Package entrypoint & clean symbol exports
 │   ├── inference.py               # BioBERT causality classifier & PDF extraction
@@ -212,7 +226,7 @@ drug-causality-bert-v2/
 
 ## 📜 Citation
 
-If you utilize this model or repository in your research or safety operations, please cite:
+If you utilize this model, codebase, or synthetic dataset in your research or safety operations, please cite:
 
 ```bibtex
 @misc{gore2025drugcausality,
@@ -222,6 +236,14 @@ If you utilize this model or repository in your research or safety operations, p
   publisher = {GitHub},
   howpublished = {\url{https://github.com/PrashantRGore/drug-causality-bert-v2}},
   note = {Fine-tuned BioBERT on ADE Corpus V2 dataset, achieving 97.6% accuracy}
+}
+
+@dataset{gore2025syntheticfaers1mv3,
+  author = {Gore, Prashant R.},
+  title = {Synthetic FAERS 1M v3: Signal-Enhanced Pharmacovigilance Dataset},
+  year = {2025},
+  publisher = {Hugging Face},
+  howpublished = {\url{https://huggingface.co/datasets/PrashantRGore/synthetic-faers-1m-v3}}
 }
 ```
 
